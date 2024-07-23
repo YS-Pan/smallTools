@@ -1,3 +1,7 @@
+# backup the current folder.
+# file and folder larger than 30MB will be ignored.
+# the backup will be saves as a .zip file under the folder named as "history".
+
 import os
 import zipfile
 from datetime import datetime
