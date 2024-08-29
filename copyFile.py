@@ -53,7 +53,7 @@ def copy_files(src_dir, dst_dir):
 
 
 # 定义源目录和目标目录
-src_dir = "D:\\"
-dst_dir = "H:\\20231029 DESKTOP-75JUIDB diskD"
+src_dir = "H:\\"
+dst_dir = r"\\DESKTOP-DERG5LD\download\backup\20240829  20190507 lenovo pHDD"
 
 copy_files(src_dir, dst_dir)
