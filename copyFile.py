@@ -3,23 +3,6 @@ This script recursively copies files and directories from a source directory
 to a destination directory, excluding directories that end with '.aedtresults'.
 The script maintains the directory structure and updates the modification 
 times of the copied directories to match the source directories.
-
-Usage:
-    1. Define the source directory (src_dir) and the destination directory (dst_dir).
-    2. Run the script.
-
-Example:
-    src_dir = "D:\\"
-    dst_dir = "H:\\20231029 DESKTOP-75JUIDB diskD"
-    copy_files(src_dir, dst_dir)
-
-Requirements:
-    - Python 3.x
-    - The `shutil` module for file operations.
-    - The `os` module for directory and file handling.
-
-Author: Your Name
-Date: 2024-08-29
 """
 
 import os
