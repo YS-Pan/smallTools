@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>一维传热计算器</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f9f9f9;
+        color: #333;
+      }
+      h1,
+      h2 {
+        text-align: center;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .box {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 10px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      /* 将“空间类型”和“时间类型”的文字与选项放在同一行 */
+      .inline-group {
+        display: flex;
+        align-items: center;
+      }
+      .inline-group label:first-child {
+        margin-right: 10px;
+        white-space: nowrap;
+      }
+      .inline-group label {
+        margin-right: 20px;
+        white-space: nowrap;
+      }
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+        display: block;
+      }
+      input[type="number"],
+      input[type="text"] {
+        width: 100%;
+        padding: 6px 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      button {
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .calcBtn {
+        padding: 10px 15px;
+        font-size: 16px;
+        background-color: #4285f4;
+        color: #fff;
+        display: block;
+        margin: 15px auto;
+      }
+      .calcBtn:hover {
+        background-color: #357ae8;
+      }
+      .addBtn {
+        padding: 8px 12px;
+        font-size: 14px;
+        background-color: #5cb85c;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-bottom: 10px;
+      }
+      .addBtn:hover {
+        background-color: #4cae4c;
+      }
+      .removeBtn {
+        padding: 5px 10px;
+        font-size: 14px;
+        background-color: #d9534f;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .removeBtn:hover {
+        background-color: #c9302c;
+      }
+      #exportBtn {
+        padding: 8px 12px;
+        font-size: 14px;
+        background-color: #f39c12;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 10px;
+        display: inline-block;
+      }
+      #exportBtn:hover {
+        background-color: #e67e22;
+      }
+      #exportImageBtn {
+        padding: 8px 12px;
+        font-size: 14px;
+        background-color: #3498db;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 10px;
+        display: inline-block;
+      }
+      #exportImageBtn:hover {
+        background-color: #2980b9;
+      }
+      /* 导出动画相关元素：初始时全部隐藏 */
+      #exportAnimationBtn,
+      #exportFormat,
+      #exportAnimationQuality,
+      #exportQualityUnit {
+        display: none;
+      }
+      #exportAnimationBtn {
+        padding: 8px 12px;
+        font-size: 14px;
+        background-color: #8e44ad;
+        color: #fff;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 10px;
+      }
+      #exportAnimationBtn:hover {
+        background-color: #732d91;
+      }
+      /* 视频质量设置框及格式选择菜单 */
+      #exportAnimationQuality {
+        margin-left: 10px;
+        width: 80px;
+        padding: 6px 4px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      #exportFormat {
+        margin-left: 10px;
+        width: 80px;
+        padding: 6px 4px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      #exportQualityUnit {
+        margin-left: 5px;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #e9ffe9;
+        border: 1px solid #b2d8b2;
+        border-radius: 3px;
+        text-align: center;
+        font-size: 18px;
+      }
+      #canvasContainer {
+        margin-top: 20px;
+      }
+      canvas {
+        width: 100%;
+        border: 1px solid #ccc;
+        background-color: #fff; /* 确保画布背景为白色 */
+      }
+      #clickInfo {
+        font-size: 16px;
+        margin-top: 10px;
+        color: #000;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid #ccc;
+      }
+      th,
+      td {
+        padding: 6px 8px;
+        text-align: center;
+      }
+      #segmentsTable th,
+      #facesTable th {
+        background-color: #f0f0f0;
+      }
+      footer {
+        font-size: 0.9em;
+        color: #777;
+        text-align: center;
+        margin-top: 20px;
+        line-height: 1.6;
+      }
+      .usage {
+        font-size: 16px;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>一维传热计算器</h1>
+    <div class="container">
+      <!-- 全局参数区域 -->
+      <div class="box">
+        <h2>全局参数</h2>
+        <div class="form-group inline-group">
+          <label>空间类型：</label>
+          <label>
+            <input
+              type="radio"
+              name="calcMode"
+              value="global"
+              checked
+              onchange="onCalcModeChange()"
+            />
+            全局参数
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="calcMode"
+              value="segmented"
+              onchange="onCalcModeChange()"
+            />
+            分段参数
+          </label>
+        </div>
+        <div class="form-group inline-group">
+          <label>时间类型：</label>
+          <label>
+            <input
+              type="radio"
+              name="timeType"
+              value="steady"
+              checked
+              onchange="onTimeTypeChange()"
+            />
+            稳态计算
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="timeType"
+              value="transient"
+              onchange="onTimeTypeChange()"
+            />
+            瞬态计算
+          </label>
+        </div>
+        <div id="globalSettingsWrapper">
+          <div class="form-group">
+            <label for="conductivity">导热率 k (W/mK)</label>
+            <input type="number" id="conductivity" step="any" value="5" />
+          </div>
+          <div class="form-group">
+            <label for="power">发热功率 Q (W)</label>
+            <input type="number" id="power" step="any" value="7" />
+          </div>
+        </div>
+        <div id="globalTransientSettings" style="display: none">
+          <div class="form-group">
+            <label for="totalTime">总时间 (s)</label>
+            <input type="number" id="totalTime" step="any" value="100" />
+          </div>
+          <div class="form-group">
+            <label for="dt">时间步长 (s)</label>
+            <input type="number" id="dt" step="any" value="0.1" />
+          </div>
+          <div id="globalTransientExtraSettings">
+            <div class="form-group">
+              <label for="volHeatCap">体积比热容 (J/(cm³K))</label>
+              <input type="number" id="volHeatCap" step="any" value="2" />
+            </div>
+            <div class="form-group">
+              <label for="initTemp">初始温度 (℃)</label>
+              <input type="number" id="initTemp" step="any" value="20" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tolerance">迭代收敛容差 (℃)</label>
+          <input
+            type="text"
+            id="tolerance"
+            placeholder="例如：1e-8"
+            value="1e-8"
+          />
+        </div>
+        <div class="form-group">
+          <label for="nodes">全局节点数量</label>
+          <input type="number" id="nodes" step="1" value="1001" />
+        </div>
+      </div>
+
+      <!-- 柱体段参数区域 -->
+      <div class="box">
+        <h2>柱体段参数</h2>
+        <p>设置每段柱体的参数：</p>
+        <table id="segmentsTable">
+          <thead id="segmentsHeader">
+            <tr>
+              <th>序号</th>
+              <th>长度 (mm)</th>
+              <th>截面面积 (mm²)</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="segmentsContainer">
+            <tr>
+              <td>1</td>
+              <td>
+                <input type="number" class="segLength" step="any" value="3" />
+              </td>
+              <td><input type="text" class="segArea" value="20*14" /></td>
+              <td>
+                <button
+                  type="button"
+                  class="removeBtn"
+                  onclick="removeSegmentRow(this)"
+                >
+                  删除
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>
+                <input type="number" class="segLength" step="any" value="10" />
+              </td>
+              <td>
+                <input type="text" class="segArea" value="pi/4*8.8^2*2" />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="removeBtn"
+                  onclick="removeSegmentRow(this)"
+                >
+                  删除
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>
+                <input type="number" class="segLength" step="any" value="3" />
+              </td>
+              <td><input type="text" class="segArea" value="280" /></td>
+              <td>
+                <button
+                  type="button"
+                  class="removeBtn"
+                  onclick="removeSegmentRow(this)"
+                >
+                  删除
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <button
+          id="addSegmentBtn"
+          type="button"
+          class="addBtn"
+          onclick="addSegmentRow()"
+        >
+          添加段
+        </button>
+      </div>
+
+      <!-- 边界条件区域 -->
+      <div class="box">
+        <h2>边界条件</h2>
+        <p>
+          设置每个边界条件参数：在“位置”处，通过“热阻”连接到一个温度为“温度
+          (℃)”的热源。
+        </p>
+        <table id="facesTable">
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>位置 (mm)</th>
+              <th>热阻 (°C/W)</th>
+              <th>温度 (℃)</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="facesContainer">
+            <tr>
+              <td>1</td>
+              <!-- 修改默认参数：位置 2mm，热阻 1，温度 -20 -->
+              <td>
+                <input
+                  type="number"
+                  class="facePosition"
+                  step="any"
+                  value="2"
+                />
+              </td>
+              <td>
+                <input type="number" class="faceR" step="any" value="1" />
+              </td>
+              <td>
+                <input type="number" class="faceTemp" step="any" value="-20" />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="removeBtn"
+                  onclick="removeFaceRow(this)"
+                >
+                  删除
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <button
+          id="addFaceBtn"
+          type="button"
+          class="addBtn"
+          onclick="addFaceRow()"
+        >
+          添加边界条件
+        </button>
+      </div>
+
+      <!-- 计算按钮 -->
+      <div style="text-align: center; margin-top: 15px">
+        <button class="calcBtn" onclick="calculateAndDraw()">
+          计算温度及分布图
+        </button>
+      </div>
+
+      <!-- 瞬态计算时的时间选择区域（播放按钮、进度条和当前时间），默认隐藏 -->
+      <div
+        id="timeSelectorWrapper"
+        style="display: none; margin-top: 10px; align-items: center"
+      >
+        <button id="playBtn" onclick="togglePlay()">播放</button>
+        <input
+          type="range"
+          id="timeSlider"
+          min="0"
+          max="0"
+          step="1"
+          style="flex: 1; margin-left: 10px"
+          onchange="onTimeSliderChange()"
+        />
+        <span id="timeLabel" style="margin-left: 10px">0 s</span>
+      </div>
+
+      <div class="result" id="result"></div>
+
+      <!-- 温度图区域 -->
+      <div id="canvasContainer">
+        <canvas id="graphCanvas" height="10"></canvas>
+      </div>
+
+      <!-- 交互信息显示区域 -->
+      <div id="clickInfo"></div>
+
+      <!-- 导出按钮区域 -->
+      <div style="text-align: left">
+        <button id="exportBtn" onclick="exportCSV()">导出 CSV</button>
+        <button id="exportImageBtn" onclick="exportImage()">导出图片</button>
+        <button
+          id="exportAnimationBtn"
+          style="display: none"
+          onclick="exportAnimation()"
+        >
+          导出动画
+        </button>
+        <select id="exportFormat" style="display: none">
+          <option value="MP4" selected>MP4</option>
+          <option value="WEBM">WEBM</option>
+        </select>
+        <input
+          type="number"
+          id="exportAnimationQuality"
+          style="display: none"
+          placeholder="质量"
+          value="10"
+        />
+        <span id="exportQualityUnit" style="display: none">Mbps</span>
+      </div>
+
+      <!-- 使用说明 -->
+      <div class="box usage">
+        <h2>使用说明</h2>
+        <p>本计算器基于一维传热模型，实现了稳态与瞬态传热的计算。模型中：</p>
+        <ul>
+          <li>
+            传热体被离散为若干“段”，每段可设定不同的长度、截面面积；在全局参数或分段参数模式下，均可设置导热率和发热功率。
+          </li>
+          <li>
+            稳态计算采用 SOR
+            迭代求解；瞬态计算采用隐式欧拉方法（有限体积离散、构造三对角系统求解），因此对时间步长不敏感且数值稳定。
+          </li>
+          <li>
+            瞬态计算中，体积比热容默认 2 J/(cm³K)（转换至 SI 单位后乘
+            1e6）、时间步长默认 0.1 s，总时间 100 s；全局节点数建议为
+            1001，以获得合适分辨率。
+          </li>
+          <li>
+            温度图中，红色曲线表示温度分布，各“段”以透明背景标识；点击图中任意位置可查看该点温度，并以蓝色十字标记。
+          </li>
+          <li>
+            下方播放按钮与滑动条在同一行；播放时可自动或手动拖动滑动条选择显示时刻。
+          </li>
+        </ul>
+        <p>注意：本模型仅考虑传导，忽略辐射、对流等其它热传递方式。</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>作者：三水合番 / YS-Pan</p>
+      <p>编写日期：2025年2月4日</p>
+      <p>
+        本程序由人工智能（模型：o3-mini-high）辅助编写，首次发表于
+        <a href="https://github.com/YS-Pan" target="_blank"
+          >https://github.com/YS-Pan</a
+        >。
+      </p>
+      <p>许可协议：MIT License</p>
+    </footer>
+
+    <script>
+      // 解析数学公式表达式（支持 pi、sqrt 和 ^）
+      function evalFormula(expr) {
+        try {
+          let replaced = expr
+            .replace(/pi/gi, "Math.PI")
+            .replace(/sqrt/gi, "Math.sqrt")
+            .replace(/\^/g, "**");
+          return Function('"use strict";return (' + replaced + ")")();
+        } catch (e) {
+          alert("公式错误: " + expr);
+          return NaN;
+        }
+      }
+
+      function getCalcMode() {
+        return document.querySelector('input[name="calcMode"]:checked').value;
+      }
+
+      // 更新分段参数表格
+      function updateSegmentTableColumns() {
+        var mode = getCalcMode();
+        var tbody = document.getElementById("segmentsContainer");
+        var timeType = document.querySelector(
+          'input[name="timeType"]:checked'
+        ).value;
+        var headerRow = document.getElementById("segmentsHeader").rows[0];
+        if (mode === "segmented") {
+          if (timeType === "transient") {
+            headerRow.innerHTML =
+              "<th>序号</th><th>长度 (mm)</th><th>截面面积 (mm²)</th><th>导热率 (W/mK)</th><th>发热功率 (W)</th><th>体积比热容 (J/(cm³K))</th><th>初始温度 (℃)</th><th>操作</th>";
+          } else {
+            headerRow.innerHTML =
+              "<th>序号</th><th>长度 (mm)</th><th>截面面积 (mm²)</th><th>导热率 (W/mK)</th><th>发热功率 (W)</th><th>操作</th>";
+          }
+          for (var i = 0; i < tbody.rows.length; i++) {
+            var row = tbody.rows[i];
+            var segLengthVal = row.querySelector(".segLength")
+              ? row.querySelector(".segLength").value
+              : "3";
+            var segAreaVal = row.querySelector(".segArea")
+              ? row.querySelector(".segArea").value
+              : "20*14";
+            var segKVal = row.querySelector(".segK")
+              ? row.querySelector(".segK").value
+              : "5";
+            var segQVal = row.querySelector(".segQ")
+              ? row.querySelector(".segQ").value
+              : "7";
+            var segCvVal = row.querySelector(".segCv")
+              ? row.querySelector(".segCv").value
+              : "2";
+            var segInitVal = row.querySelector(".segInitTemp")
+              ? row.querySelector(".segInitTemp").value
+              : "20";
+            if (timeType === "transient") {
+              row.innerHTML =
+                "<td>" +
+                (i + 1) +
+                "</td>" +
+                "<td><input type='number' class='segLength' step='any' value='" +
+                segLengthVal +
+                "'></td>" +
+                "<td><input type='text' class='segArea' value='" +
+                segAreaVal +
+                "'></td>" +
+                "<td><input type='number' class='segK' step='any' value='" +
+                segKVal +
+                "'></td>" +
+                "<td><input type='number' class='segQ' step='any' value='" +
+                segQVal +
+                "'></td>" +
+                "<td><input type='number' class='segCv' step='any' value='" +
+                segCvVal +
+                "'></td>" +
+                "<td><input type='number' class='segInitTemp' step='any' value='" +
+                segInitVal +
+                "'></td>" +
+                "<td><button type='button' class='removeBtn' onclick='removeSegmentRow(this)'>删除</button></td>";
+            } else {
+              row.innerHTML =
+                "<td>" +
+                (i + 1) +
+                "</td>" +
+                "<td><input type='number' class='segLength' step='any' value='" +
+                segLengthVal +
+                "'></td>" +
+                "<td><input type='text' class='segArea' value='" +
+                segAreaVal +
+                "'></td>" +
+                "<td><input type='number' class='segK' step='any' value='" +
+                segKVal +
+                "'></td>" +
+                "<td><input type='number' class='segQ' step='any' value='" +
+                segQVal +
+                "'></td>" +
+                "<td><button type='button' class='removeBtn' onclick='removeSegmentRow(this)'>删除</button></td>";
+            }
+          }
+        } else {
+          headerRow.innerHTML =
+            "<th>序号</th><th>长度 (mm)</th><th>截面面积 (mm²)</th><th>操作</th>";
+          for (var i = 0; i < tbody.rows.length; i++) {
+            var row = tbody.rows[i];
+            while (row.cells.length > 4) {
+              row.deleteCell(3);
+            }
+            row.cells[0].innerText = i + 1;
+          }
+        }
+      }
+
+      function onCalcModeChange() {
+        var mode = getCalcMode();
+        updateSegmentTableColumns();
+        var globalWrapper = document.getElementById("globalSettingsWrapper");
+        if (mode === "segmented") {
+          globalWrapper.style.display = "none";
+          document.getElementById(
+            "globalTransientExtraSettings"
+          ).style.display = "none";
+        } else {
+          globalWrapper.style.display = "block";
+          var timeType = document.querySelector(
+            'input[name="timeType"]:checked'
+          ).value;
+          if (timeType === "transient") {
+            document.getElementById(
+              "globalTransientExtraSettings"
+            ).style.display = "block";
+          }
+        }
+      }
+
+      function onTimeTypeChange() {
+        var timeType = document.querySelector(
+          'input[name="timeType"]:checked'
+        ).value;
+        var exportAnimationBtn = document.getElementById("exportAnimationBtn");
+        var qualityInput = document.getElementById("exportAnimationQuality");
+        var exportFormat = document.getElementById("exportFormat");
+        var exportQualityUnit = document.getElementById("exportQualityUnit");
+        if (timeType === "steady") {
+          document.getElementById("globalTransientSettings").style.display =
+            "none";
+          updateSegmentTableColumns();
+          document.getElementById("timeSelectorWrapper").style.display = "none";
+          exportAnimationBtn.style.display = "none";
+          qualityInput.style.display = "none";
+          exportFormat.style.display = "none";
+          exportQualityUnit.style.display = "none";
+        } else {
+          document.getElementById("globalTransientSettings").style.display =
+            "block";
+          if (getCalcMode() === "global") {
+            document.getElementById(
+              "globalTransientExtraSettings"
+            ).style.display = "block";
+          } else {
+            document.getElementById(
+              "globalTransientExtraSettings"
+            ).style.display = "none";
+          }
+          updateSegmentTableColumns();
+          document.getElementById("timeSelectorWrapper").style.display = "flex";
+          exportAnimationBtn.style.display = "inline-block";
+          qualityInput.style.display = "inline-block";
+          exportFormat.style.display = "inline-block";
+          exportQualityUnit.style.display = "inline-block";
+        }
+      }
+
+      function addSegmentRow() {
+        var mode = getCalcMode();
+        var tbody = document.getElementById("segmentsContainer");
+        var segCount = tbody.rows.length + 1;
+        var timeType = document.querySelector(
+          'input[name="timeType"]:checked'
+        ).value;
+        var tr = document.createElement("tr");
+        var html =
+          "<td>" +
+          segCount +
+          "</td>" +
+          "<td><input type='number' class='segLength' step='any' value='" +
+          (segCount === 1 ? "3" : segCount === 2 ? "10" : "3") +
+          "'></td>" +
+          "<td><input type='text' class='segArea' value='" +
+          (segCount === 1 ? "20*14" : segCount === 2 ? "pi/4*8.8^2*2" : "280") +
+          "'></td>";
+        if (mode === "segmented") {
+          html +=
+            "<td><input type='number' class='segK' step='any' value='5'></td>" +
+            "<td><input type='number' class='segQ' step='any' value='7'></td>";
+          if (timeType === "transient") {
+            html +=
+              "<td><input type='number' class='segCv' step='any' value='2'></td>" +
+              "<td><input type='number' class='segInitTemp' step='any' value='20'></td>";
+          }
+          html +=
+            "<td><button type='button' class='removeBtn' onclick='removeSegmentRow(this)'>删除</button></td>";
+        } else {
+          html +=
+            "<td><button type='button' class='removeBtn' onclick='removeSegmentRow(this)'>删除</button></td>";
+        }
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+      }
+
+      function removeSegmentRow(btn) {
+        var tbody = document.getElementById("segmentsContainer");
+        if (tbody.rows.length <= 1) {
+          alert("至少必须保留一段。");
+          return;
+        }
+        btn.parentElement.parentElement.remove();
+        for (let i = 0; i < tbody.rows.length; i++) {
+          tbody.rows[i].cells[0].innerText = i + 1;
+        }
+      }
+
+      function addFaceRow() {
+        var tbody = document.getElementById("facesContainer");
+        var faceCount = tbody.rows.length + 1;
+        var tr = document.createElement("tr");
+        // 修改默认：位置 2mm，热阻 1，温度 -20
+        tr.innerHTML =
+          "<td>" +
+          faceCount +
+          "</td>" +
+          "<td><input type='number' class='facePosition' step='any' value='2'></td>" +
+          "<td><input type='number' class='faceR' step='any' value='1'></td>" +
+          "<td><input type='number' class='faceTemp' step='any' value='-20'></td>" +
+          "<td><button type='button' class='removeBtn' onclick='removeFaceRow(this)'>删除</button></td>";
+        tbody.appendChild(tr);
+      }
+
+      function removeFaceRow(btn) {
+        var tbody = document.getElementById("facesContainer");
+        if (tbody.rows.length <= 1) {
+          alert("至少必须保留一个边界条件。");
+          return;
+        }
+        btn.parentElement.parentElement.remove();
+        for (let i = 0; i < tbody.rows.length; i++) {
+          tbody.rows[i].cells[0].innerText = i + 1;
+        }
+      }
+
+      window.latestX = null;
+      window.latestT = null;
+      window.latestSegEdges = null;
+      window.transientHistory = null;
+      window.isPlaying = false;
+      window.playTimer = null;
+
+      function solveBlock(a_arr, b_arr, c_arr, d_arr) {
+        var n = b_arr.length;
+        var cp = new Array(n);
+        var dp = new Array(n);
+        var x = new Array(n);
+        cp[0] = c_arr[0] / b_arr[0];
+        dp[0] = d_arr[0] / b_arr[0];
+        for (var i = 1; i < n; i++) {
+          var m = 1 / (b_arr[i] - a_arr[i] * cp[i - 1]);
+          cp[i] = c_arr[i] * m;
+          dp[i] = (d_arr[i] - a_arr[i] * dp[i - 1]) * m;
+        }
+        x[n - 1] = dp[n - 1];
+        for (var i = n - 2; i >= 0; i--) {
+          x[i] = dp[i] - cp[i] * x[i + 1];
+        }
+        return x;
+      }
+
+      function calculateAndDraw() {
+        var mode = getCalcMode();
+        var timeType = document.querySelector(
+          'input[name="timeType"]:checked'
+        ).value;
+        var globalKVal = parseFloat(
+          document.getElementById("conductivity").value
+        );
+        var globalQVal = parseFloat(document.getElementById("power").value);
+        var tol = parseFloat(document.getElementById("tolerance").value);
+        var N_total = parseInt(document.getElementById("nodes").value, 10);
+
+        if (
+          isNaN(globalKVal) ||
+          isNaN(globalQVal) ||
+          isNaN(tol) ||
+          isNaN(N_total) ||
+          globalKVal === 0 ||
+          tol <= 0 ||
+          N_total < 3
+        ) {
+          document.getElementById("result").innerText =
+            "请检查全局参数（导热率、发热功率、容差、节点数）是否有效。";
+          return;
+        }
+
+        var totalTime, dt;
+        var cv_global, initTemp_global;
+        if (timeType === "transient") {
+          totalTime = parseFloat(document.getElementById("totalTime").value);
+          dt = parseFloat(document.getElementById("dt").value);
+          if (isNaN(totalTime) || isNaN(dt) || totalTime <= 0 || dt <= 0) {
+            document.getElementById("result").innerText =
+              "请检查总时间和时间步长是否有效。";
+            return;
+          }
+          if (mode === "global") {
+            cv_global =
+              parseFloat(document.getElementById("volHeatCap").value) * 1e6;
+            initTemp_global = parseFloat(
+              document.getElementById("initTemp").value
+            );
+            if (isNaN(cv_global) || isNaN(initTemp_global) || cv_global <= 0) {
+              document.getElementById("result").innerText =
+                "请检查体积比热容和初始温度是否有效。";
+              return;
+            }
+          }
+        }
+
+        var tbody = document.getElementById("segmentsContainer");
+        var segments = [];
+        var totalLength = 0;
+        var totalVolume = 0;
+        for (let i = 0; i < tbody.rows.length; i++) {
+          var row = tbody.rows[i];
+          var len_mm = parseFloat(row.querySelector(".segLength").value);
+          var areaStr = row.querySelector(".segArea").value;
+          var areaValue = evalFormula(areaStr);
+          if (
+            isNaN(len_mm) ||
+            isNaN(areaValue) ||
+            len_mm <= 0 ||
+            areaValue <= 0
+          ) {
+            document.getElementById("result").innerText =
+              "请确保所有段的长度和截面面积均为正且公式正确。";
+            return;
+          }
+          var L_i = len_mm / 1000;
+          var A_i = areaValue / 1e6;
+          var seg = { L: L_i, A: A_i };
+          if (mode === "segmented") {
+            var k_seg = parseFloat(row.querySelector(".segK").value);
+            var Q_seg = parseFloat(row.querySelector(".segQ").value);
+            if (isNaN(k_seg) || k_seg === 0) {
+              document.getElementById("result").innerText =
+                "请确保分段导热率有效且非零。";
+              return;
+            }
+            seg.k = k_seg;
+            seg.q = Q_seg / (A_i * L_i);
+            if (timeType === "transient") {
+              var cv_seg = parseFloat(row.querySelector(".segCv").value) * 1e6;
+              var initTemp_seg = parseFloat(
+                row.querySelector(".segInitTemp").value
+              );
+              if (isNaN(cv_seg) || isNaN(initTemp_seg) || cv_seg <= 0) {
+                document.getElementById("result").innerText =
+                  "请检查每段的体积比热容和初始温度是否有效。";
+                return;
+              }
+              seg.cv = cv_seg;
+              seg.initTemp = initTemp_seg;
+            }
+          }
+          segments.push(seg);
+          totalLength += L_i;
+          totalVolume += A_i * L_i;
+        }
+
+        var qTriple = mode === "global" ? globalQVal / totalVolume : null;
+
+        var M = segments.length;
+        var nodesPerSegment = [];
+        for (let i = 0; i < M; i++) {
+          var n_i =
+            Math.floor((segments[i].L / totalLength) * (N_total - M)) + 1;
+          if (n_i < 2) n_i = 2;
+          nodesPerSegment.push(n_i);
+        }
+        var N = nodesPerSegment.reduce((a, b) => a + b, 0) - (M - 1);
+
+        var globalX = [];
+        var globalA = [];
+        var globalK = [];
+        var globalq = [];
+        var offset = 0;
+        for (let j = 0; j < M; j++) {
+          var n_j = nodesPerSegment[j];
+          var L_j = segments[j].L;
+          var A_j = segments[j].A;
+          var dx = n_j - 1 > 0 ? L_j / (n_j - 1) : L_j;
+          if (j === 0) {
+            for (let i = 0; i < n_j; i++) {
+              globalX.push(offset + i * dx);
+              globalA.push(A_j);
+              var k_val = mode === "global" ? globalKVal : segments[j].k;
+              globalK.push(k_val);
+              var q_val = mode === "global" ? qTriple : segments[j].q;
+              globalq.push(q_val);
+            }
+          } else {
+            for (let i = 1; i < n_j; i++) {
+              globalX.push(offset + i * dx);
+              globalA.push(A_j);
+              var k_val = mode === "global" ? globalKVal : segments[j].k;
+              globalK.push(k_val);
+              var q_val = mode === "global" ? qTriple : segments[j].q;
+              globalq.push(q_val);
+            }
+          }
+          offset += L_j;
+        }
+
+        var segEdges = [];
+        var cum = 0;
+        for (let i = 0; i < segments.length; i++) {
+          segEdges.push({ start: cum, end: cum + segments[i].L });
+          cum += segments[i].L;
+        }
+
+        var tbodyFace = document.getElementById("facesContainer");
+        var faces = [];
+        for (let i = 0; i < tbodyFace.rows.length; i++) {
+          var row = tbodyFace.rows[i];
+          var pos_mm = parseFloat(row.querySelector(".facePosition").value);
+          var R_val = parseFloat(row.querySelector(".faceR").value);
+          var faceTemp = parseFloat(row.querySelector(".faceTemp").value);
+          if (isNaN(pos_mm) || isNaN(R_val) || isNaN(faceTemp) || R_val < 0) {
+            document.getElementById("result").innerText =
+              "请确保所有边界条件的参数均有效（热阻不能为负）。";
+            return;
+          }
+          faces.push({ pos: pos_mm / 1000, R: R_val, temp: faceTemp });
+        }
+
+        var outputMap = {};
+        for (let i = 0; i < faces.length; i++) {
+          var face = faces[i];
+          var bestIndex = 0;
+          var minDiff = Math.abs(globalX[0] - face.pos);
+          for (let j = 1; j < N; j++) {
+            var diff = Math.abs(globalX[j] - face.pos);
+            if (diff < minDiff) {
+              minDiff = diff;
+              bestIndex = j;
+            }
+          }
+          if (outputMap.hasOwnProperty(bestIndex)) {
+            if (face.R === 0) {
+              outputMap[bestIndex].fixed = true;
+              outputMap[bestIndex].T0 = face.temp;
+            } else {
+              if (!outputMap[bestIndex].fixed) {
+                outputMap[bestIndex].extra += 1 / face.R;
+                outputMap[bestIndex].Tcontrib += (1 / face.R) * face.temp;
+              }
+            }
+          } else {
+            if (face.R === 0) {
+              outputMap[bestIndex] = {
+                fixed: true,
+                extra: 0,
+                T0: face.temp,
+                Tcontrib: 0,
+              };
+            } else {
+              outputMap[bestIndex] = {
+                fixed: false,
+                extra: 1 / face.R,
+                Tcontrib: (1 / face.R) * face.temp,
+              };
+            }
+          }
+        }
+
+        window.latestSegEdges = segEdges;
+
+        var canvas = document.getElementById("graphCanvas");
+        canvas.height = 400;
+
+        if (timeType === "steady") {
+          var T = new Array(N).fill(0);
+          var omega = 2 / (1 + Math.sin(Math.PI / N));
+          if (omega > 1.99) omega = 1.99;
+          var maxIter = 1000000;
+          var startTime = Date.now();
+          var iter,
+            diffMax = 0;
+          for (iter = 0; iter < maxIter; iter++) {
+            diffMax = 0;
+            for (let i = 0; i < N; i++) {
+              if (i === 0) {
+                let h = globalX[1] - globalX[0];
+                let P_right =
+                  2 /
+                  (1 / (globalK[0] * globalA[0]) +
+                    1 / (globalK[1] * globalA[1]));
+                let coeff = P_right / h;
+                let V0 = (globalA[0] * h) / 2;
+                let extra =
+                  outputMap.hasOwnProperty(0) && !outputMap[0].fixed
+                    ? outputMap[0].extra
+                    : 0;
+                let T_bc =
+                  outputMap.hasOwnProperty(0) && !outputMap[0].fixed
+                    ? outputMap[0].Tcontrib
+                    : 0;
+                let T_new =
+                  (coeff * T[1] + globalq[0] * V0 + T_bc) / (coeff + extra);
+                if (outputMap.hasOwnProperty(0) && outputMap[0].fixed)
+                  T_new = outputMap[0].T0;
+                let oldVal = T[0];
+                T[0] = (1 - omega) * T[0] + omega * T_new;
+                diffMax = Math.max(diffMax, Math.abs(T[0] - oldVal));
+              } else if (i === N - 1) {
+                let h = globalX[N - 1] - globalX[N - 2];
+                let P_left =
+                  2 /
+                  (1 / (globalK[N - 2] * globalA[N - 2]) +
+                    1 / (globalK[N - 1] * globalA[N - 1]));
+                let coeff = P_left / h;
+                let VN = (globalA[N - 1] * h) / 2;
+                let extra =
+                  outputMap.hasOwnProperty(N - 1) && !outputMap[N - 1].fixed
+                    ? outputMap[N - 1].extra
+                    : 0;
+                let T_bc =
+                  outputMap.hasOwnProperty(N - 1) && !outputMap[N - 1].fixed
+                    ? outputMap[N - 1].Tcontrib
+                    : 0;
+                let T_new =
+                  (coeff * T[N - 2] + globalq[N - 1] * VN + T_bc) /
+                  (coeff + extra);
+                if (outputMap.hasOwnProperty(N - 1) && outputMap[N - 1].fixed)
+                  T_new = outputMap[N - 1].T0;
+                let oldVal = T[N - 1];
+                T[N - 1] = (1 - omega) * T[N - 1] + omega * T_new;
+                diffMax = Math.max(diffMax, Math.abs(T[N - 1] - oldVal));
+              } else {
+                let hL = globalX[i] - globalX[i - 1];
+                let hR = globalX[i + 1] - globalX[i];
+                let P_left =
+                  2 /
+                  (1 / (globalK[i - 1] * globalA[i - 1]) +
+                    1 / (globalK[i] * globalA[i]));
+                let P_right =
+                  2 /
+                  (1 / (globalK[i] * globalA[i]) +
+                    1 / (globalK[i + 1] * globalA[i + 1]));
+                let coeff_left = P_left / hL;
+                let coeff_right = P_right / hR;
+                let V_i = (globalA[i] * (hL + hR)) / 2;
+                let extra =
+                  outputMap.hasOwnProperty(i) && !outputMap[i].fixed
+                    ? outputMap[i].extra
+                    : 0;
+                let T_bc =
+                  outputMap.hasOwnProperty(i) && !outputMap[i].fixed
+                    ? outputMap[i].Tcontrib
+                    : 0;
+                let T_new =
+                  (coeff_left * T[i - 1] +
+                    coeff_right * T[i + 1] +
+                    globalq[i] * V_i +
+                    T_bc) /
+                  (coeff_left + coeff_right + extra);
+                if (outputMap.hasOwnProperty(i) && outputMap[i].fixed)
+                  T_new = outputMap[i].T0;
+                let oldVal = T[i];
+                T[i] = (1 - omega) * T[i] + omega * T_new;
+                diffMax = Math.max(diffMax, Math.abs(T[i] - oldVal));
+              }
+            }
+            if (diffMax < tol) break;
+            if (Date.now() - startTime >= 5000) break;
+          }
+          let resultText =
+            "最高温度约为 " +
+            Math.max(...T).toFixed(2) +
+            " ℃，迭代 " +
+            iter +
+            " 次。";
+          if (diffMax >= tol) {
+            resultText += " 警告：迭代未收敛！";
+          }
+          document.getElementById("result").innerText = resultText;
+          window.latestT = T;
+          window.latestX = globalX;
+          drawGraph(T, globalX, segEdges);
+        } else {
+          var globalCv = [];
+          var globalInitialT = [];
+          offset = 0;
+          for (let j = 0; j < M; j++) {
+            var n_j = nodesPerSegment[j];
+            if (j === 0) {
+              for (let i = 0; i < n_j; i++) {
+                if (mode === "global") {
+                  globalCv.push(cv_global);
+                  globalInitialT.push(initTemp_global);
+                } else {
+                  globalCv.push(segments[j].cv);
+                  globalInitialT.push(segments[j].initTemp);
+                }
+              }
+            } else {
+              for (let i = 1; i < n_j; i++) {
+                if (mode === "global") {
+                  globalCv.push(cv_global);
+                  globalInitialT.push(initTemp_global);
+                } else {
+                  globalCv.push(segments[j].cv);
+                  globalInitialT.push(segments[j].initTemp);
+                }
+              }
+            }
+          }
+
+          var globalV = [];
+          for (let i = 0; i < N; i++) {
+            if (i === 0) {
+              var h = globalX[1] - globalX[0];
+              globalV.push((globalA[0] * h) / 2);
+            } else if (i === N - 1) {
+              var h = globalX[N - 1] - globalX[N - 2];
+              globalV.push((globalA[N - 1] * h) / 2);
+            } else {
+              var h = globalX[i + 1] - globalX[i - 1];
+              globalV.push((globalA[i] * h) / 2);
+            }
+          }
+
+          var T = globalInitialT.slice();
+          var transientHistory = [];
+          transientHistory.push({ time: 0, T: T.slice() });
+          var steps = Math.floor(totalTime / dt);
+          for (let step = 0; step < steps; step++) {
+            var T_old = T.slice();
+            var newT = T.slice();
+            var fixedFlag = new Array(N).fill(false);
+            var fixedValue = new Array(N).fill(null);
+            for (let i = 0; i < N; i++) {
+              if (outputMap.hasOwnProperty(i) && outputMap[i].fixed) {
+                fixedFlag[i] = true;
+                fixedValue[i] = outputMap[i].T0;
+              }
+            }
+            var a_arr = new Array(N).fill(0);
+            var b_arr = new Array(N).fill(0);
+            var c_arr = new Array(N).fill(0);
+            var d_arr = new Array(N).fill(0);
+            var L_coef = new Array(N).fill(0);
+            var R_coef = new Array(N).fill(0);
+            var gamma = new Array(N).fill(0);
+            for (let i = 0; i < N; i++) {
+              var cv = globalCv[i];
+              var Vi = globalV[i];
+              var extra =
+                outputMap.hasOwnProperty(i) && !outputMap[i].fixed
+                  ? outputMap[i].extra
+                  : 0;
+              var T_driven =
+                outputMap.hasOwnProperty(i) &&
+                !outputMap[i].fixed &&
+                outputMap[i].extra > 0
+                  ? outputMap[i].Tcontrib / outputMap[i].extra
+                  : 0;
+              gamma[i] = (dt / (cv * Vi)) * extra;
+              if (i > 0) {
+                var dx_left = globalX[i] - globalX[i - 1];
+                var A_left = (globalA[i - 1] + globalA[i]) / 2;
+                var k_eff_left = 2 / (1 / globalK[i - 1] + 1 / globalK[i]);
+                L_coef[i] =
+                  (dt / (cv * Vi)) * ((k_eff_left * A_left) / dx_left);
+              } else {
+                L_coef[i] = 0;
+              }
+              if (i < N - 1) {
+                var dx_right = globalX[i + 1] - globalX[i];
+                var A_right = (globalA[i] + globalA[i + 1]) / 2;
+                var k_eff_right = 2 / (1 / globalK[i] + 1 / globalK[i + 1]);
+                R_coef[i] =
+                  (dt / (cv * Vi)) * ((k_eff_right * A_right) / dx_right);
+              } else {
+                R_coef[i] = 0;
+              }
+              b_arr[i] = 1 + L_coef[i] + R_coef[i] + gamma[i];
+              d_arr[i] =
+                T_old[i] + (dt / cv) * globalq[i] + gamma[i] * T_driven;
+              a_arr[i] = i > 0 ? -L_coef[i] : 0;
+              c_arr[i] = i < N - 1 ? -R_coef[i] : 0;
+              if (fixedFlag[i]) {
+                b_arr[i] = 1;
+                d_arr[i] = fixedValue[i];
+                a_arr[i] = 0;
+                c_arr[i] = 0;
+              }
+            }
+            var solT = newT.slice();
+            var i_index = 0;
+            while (i_index < N) {
+              if (fixedFlag[i_index]) {
+                solT[i_index] = fixedValue[i_index];
+                i_index++;
+              } else {
+                var start = i_index;
+                while (i_index < N && !fixedFlag[i_index]) {
+                  i_index++;
+                }
+                var end = i_index - 1;
+                var A_block = [];
+                var B_block = [];
+                var C_block = [];
+                var D_block = [];
+                for (let j = start; j <= end; j++) {
+                  var d_val = d_arr[j];
+                  if (j == start && start > 0 && fixedFlag[start - 1]) {
+                    d_val -= a_arr[j] * fixedValue[start - 1];
+                  }
+                  if (j == end && end < N - 1 && fixedFlag[end + 1]) {
+                    d_val -= c_arr[j] * fixedValue[end + 1];
+                  }
+                  A_block.push(a_arr[j]);
+                  B_block.push(b_arr[j]);
+                  C_block.push(c_arr[j]);
+                  D_block.push(d_val);
+                }
+                var x_block = solveBlock(A_block, B_block, C_block, D_block);
+                for (let j = start; j <= end; j++) {
+                  solT[j] = x_block[j - start];
+                }
+              }
+            }
+            T = solT.slice();
+            transientHistory.push({ time: (step + 1) * dt, T: T.slice() });
+          }
+          window.transientHistory = transientHistory;
+          window.latestT = T;
+          window.latestX = globalX;
+          var timeSlider = document.getElementById("timeSlider");
+          timeSlider.min = 0;
+          timeSlider.max = transientHistory.length - 1;
+          timeSlider.value = transientHistory.length - 1;
+          document.getElementById("timeLabel").innerText =
+            transientHistory[transientHistory.length - 1].time.toFixed(6) +
+            " s";
+          document.getElementById("result").innerText =
+            "瞬态模拟完成，最终最高温度约为 " +
+            Math.max(...T).toFixed(2) +
+            " ℃，共模拟 " +
+            transientHistory.length +
+            " 个时刻。";
+          drawGraph(T, globalX, segEdges);
+        }
+      }
+
+      function drawGraph(T, xArray, segEdges) {
+        var canvas = document.getElementById("graphCanvas");
+        canvas.width = canvas.parentElement.clientWidth;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        var marginLeft = 80,
+          marginRight = 20,
+          marginTop = 20,
+          marginBottom = 40;
+        var drawingWidth = canvas.width - marginLeft - marginRight;
+        var drawingHeight = canvas.height - marginTop - marginBottom;
+
+        var x_min = xArray[0],
+          x_max = xArray[xArray.length - 1];
+        var T_max_data = Math.max(...T);
+        var T_min_data = Math.min(...T);
+        var y_lower = T_min_data > 0 ? 0 : T_min_data;
+        var y_upper = T_max_data < 0 ? 0 : T_max_data;
+        var yRange = y_upper - y_lower;
+        if (yRange === 0) yRange = 1;
+
+        var colors = [
+          "rgba(255,0,0,0.1)",
+          "rgba(0,255,0,0.1)",
+          "rgba(0,0,255,0.1)",
+          "rgba(255,255,0,0.1)",
+          "rgba(0,255,255,0.1)",
+          "rgba(255,0,255,0.1)",
+        ];
+        for (var i = 0; i < segEdges.length; i++) {
+          let seg = segEdges[i];
+          let x_start =
+            marginLeft + ((seg.start - x_min) / (x_max - x_min)) * drawingWidth;
+          let x_end =
+            marginLeft + ((seg.end - x_min) / (x_max - x_min)) * drawingWidth;
+          let width = x_end - x_start;
+          ctx.fillStyle = colors[i % colors.length];
+          ctx.fillRect(x_start, marginTop, width, drawingHeight);
+        }
+
+        var xTicks = [];
+        var xInterval = (x_max - x_min) / 4;
+        for (var i = 0; i < 5; i++) {
+          xTicks.push(x_min + i * xInterval);
+        }
+        var yTicks = [];
+        var yInterval = yRange / 4;
+        for (var i = 0; i < 5; i++) {
+          yTicks.push(y_lower + i * yInterval);
+        }
+
+        ctx.strokeStyle = "#ccc";
+        ctx.lineWidth = 1.5;
+        xTicks.forEach(function (val) {
+          let xp =
+            marginLeft + ((val - x_min) / (x_max - x_min)) * drawingWidth;
+          ctx.beginPath();
+          ctx.moveTo(xp, marginTop);
+          ctx.lineTo(xp, canvas.height - marginBottom);
+          ctx.stroke();
+        });
+        yTicks.forEach(function (val) {
+          let yp =
+            canvas.height -
+            marginBottom -
+            ((val - y_lower) / yRange) * drawingHeight;
+          ctx.beginPath();
+          ctx.moveTo(marginLeft, yp);
+          ctx.lineTo(canvas.width - marginRight, yp);
+          ctx.stroke();
+        });
+
+        if (0 >= y_lower && 0 <= y_upper) {
+          let y0 =
+            canvas.height -
+            marginBottom -
+            ((0 - y_lower) / yRange) * drawingHeight;
+          ctx.strokeStyle = "#aaa";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(marginLeft, y0);
+          ctx.lineTo(canvas.width - marginRight, y0);
+          ctx.stroke();
+        }
+
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, canvas.height - marginBottom);
+        ctx.lineTo(canvas.width - marginRight, canvas.height - marginBottom);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(marginLeft, marginTop);
+        ctx.lineTo(marginLeft, canvas.height - marginBottom);
+        ctx.stroke();
+
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#000";
+
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < T.length; i++) {
+          let xp =
+            marginLeft + ((xArray[i] - x_min) / (x_max - x_min)) * drawingWidth;
+          let yp =
+            canvas.height -
+            marginBottom -
+            ((T[i] - y_lower) / yRange) * drawingHeight;
+          if (i === 0) ctx.moveTo(xp, yp);
+          else ctx.lineTo(xp, yp);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 1;
+        ctx.textAlign = "center";
+        xTicks.forEach(function (val) {
+          let xp =
+            marginLeft + ((val - x_min) / (x_max - x_min)) * drawingWidth;
+          let yp = canvas.height - marginBottom;
+          ctx.beginPath();
+          ctx.moveTo(xp, yp);
+          ctx.lineTo(xp, yp - 5);
+          ctx.stroke();
+          ctx.fillText((val * 1000).toFixed(0), xp, yp + 20);
+        });
+        ctx.fillText(
+          "x (mm)",
+          marginLeft + drawingWidth / 2,
+          canvas.height - 5
+        );
+
+        ctx.textAlign = "right";
+        yTicks.forEach(function (val) {
+          let yp =
+            canvas.height -
+            marginBottom -
+            ((val - y_lower) / yRange) * drawingHeight;
+          ctx.beginPath();
+          ctx.moveTo(marginLeft, yp);
+          ctx.lineTo(marginLeft + 5, yp);
+          ctx.stroke();
+          ctx.fillText(val.toFixed(2), marginLeft - 10, yp + 5);
+        });
+        ctx.save();
+        ctx.translate(20, marginTop + drawingHeight / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = "center";
+        ctx.fillText("温度 (℃)", 0, 0);
+        ctx.restore();
+
+        window.plotParams = {
+          marginLeft: marginLeft,
+          marginRight: marginRight,
+          marginTop: marginTop,
+          marginBottom: marginBottom,
+          drawingWidth: drawingWidth,
+          drawingHeight: drawingHeight,
+          x_min: x_min,
+          x_max: x_max,
+          y_lower: y_lower,
+          yRange: yRange,
+        };
+      }
+
+      function exportCSV() {
+        var timeType = document.querySelector(
+          'input[name="timeType"]:checked'
+        ).value;
+        var csvContent = "";
+        if (timeType === "transient" && window.transientHistory) {
+          csvContent = "时间(s),x(mm),T(℃)\n";
+          window.transientHistory.forEach(function (entry) {
+            for (let i = 0; i < window.latestX.length; i++) {
+              csvContent +=
+                entry.time.toFixed(6) +
+                "," +
+                (window.latestX[i] * 1000).toFixed(6) +
+                "," +
+                entry.T[i].toFixed(6) +
+                "\n";
+            }
+          });
+        } else if (window.latestX && window.latestT) {
+          csvContent = "x(mm),T(℃)\n";
+          for (let i = 0; i < window.latestX.length; i++) {
+            csvContent +=
+              (window.latestX[i] * 1000).toFixed(6) +
+              "," +
+              window.latestT[i].toFixed(6) +
+              "\n";
+          }
+        } else {
+          alert("请先计算温度分布");
+          return;
+        }
+        var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        var link = document.createElement("a");
+        if (link.download !== undefined) {
+          var url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", "温度分布.csv");
+          link.style.visibility = "hidden";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }
+
+      function exportImage() {
+        var canvas = document.getElementById("graphCanvas");
+        var imgURL = canvas.toDataURL("image/png");
+        var link = document.createElement("a");
+        link.href = imgURL;
+        link.download = "温度图.png";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      function exportAnimation() {
+        if (!window.transientHistory) {
+          alert("请先计算瞬态温度分布，然后再导出动画。");
+          return;
+        }
+        var canvas = document.getElementById("graphCanvas");
+        var stream = canvas.captureStream(60);
+        let recordedChunks = [];
+        var quality = parseInt(
+          document.getElementById("exportAnimationQuality").value,
+          10
+        );
+        var exportFormat = document.getElementById("exportFormat").value;
+        let options = {};
+        if (exportFormat === "MP4") {
+          options.mimeType = "video/mp4";
+        } else {
+          options.mimeType = "video/webm";
+        }
+        if (quality && !isNaN(quality)) {
+          options.videoBitsPerSecond = quality * 1000000;
+        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          alert(
+            "当前浏览器不支持 " + options.mimeType + " 格式录制，无法导出动画。"
+          );
+          return;
+        }
+        let mediaRecorder = new MediaRecorder(stream, options);
+
+        mediaRecorder.ondataavailable = function (e) {
+          if (e.data.size > 0) {
+            recordedChunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = function (e) {
+          let blob = new Blob(recordedChunks, { type: options.mimeType });
+          let url = URL.createObjectURL(blob);
+          let a = document.createElement("a");
+          a.href = url;
+          a.download = exportFormat === "MP4" ? "动画.mp4" : "动画.webm";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+
+        var transientHistory = window.transientHistory;
+        var N = transientHistory.length;
+        var T_candidate1 = N / 60;
+        var T_candidate2 = 10;
+        var T_play = Math.max(T_candidate1, T_candidate2);
+        var intervalMs = (T_play / (N - 1)) * 1000;
+
+        mediaRecorder.start();
+
+        let i = 0;
+        function drawNextFrame() {
+          if (i >= N) {
+            mediaRecorder.stop();
+            return;
+          }
+          let history = transientHistory[i];
+          window.latestT = history.T;
+          drawGraph(history.T, window.latestX, window.latestSegEdges);
+          document.getElementById("timeLabel").innerText =
+            history.time.toFixed(6) + " s";
+          i++;
+          setTimeout(drawNextFrame, intervalMs);
+        }
+        drawNextFrame();
+      }
+
+      (function () {
+        var canvas = document.getElementById("graphCanvas");
+        canvas.addEventListener("click", function (e) {
+          if (
+            !window.plotParams ||
+            !window.latestX ||
+            !window.latestT ||
+            !window.latestSegEdges
+          )
+            return;
+          var rect = canvas.getBoundingClientRect();
+          var clickX = e.clientX - rect.left;
+          var clickY = e.clientY - rect.top;
+          var p = window.plotParams;
+          if (
+            clickX < p.marginLeft ||
+            clickX > canvas.width - p.marginRight ||
+            clickY < p.marginTop ||
+            clickY > canvas.height - p.marginBottom
+          ) {
+            return;
+          }
+          drawGraph(window.latestT, window.latestX, window.latestSegEdges);
+          var fraction = (clickX - p.marginLeft) / p.drawingWidth;
+          var xPos = fraction * (p.x_max - p.x_min) + p.x_min;
+          var rel = (canvas.height - p.marginBottom - clickY) / p.drawingHeight;
+          var T_value = p.y_lower + rel * p.yRange;
+          xPos = xPos * 1000;
+          var infoDiv = document.getElementById("clickInfo");
+          infoDiv.innerText =
+            "点击点位置： " +
+            xPos.toFixed(2) +
+            " mm, 温度： " +
+            T_value.toFixed(2) +
+            " ℃";
+          var ctx = canvas.getContext("2d");
+          ctx.save();
+          ctx.strokeStyle = "blue";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(clickX - 5, clickY - 5);
+          ctx.lineTo(clickX + 5, clickY + 5);
+          ctx.moveTo(clickX - 5, clickY + 5);
+          ctx.lineTo(clickX + 5, clickY - 5);
+          ctx.stroke();
+          ctx.restore();
+        });
+      })();
+
+      function onTimeSliderChange() {
+        var idx = parseInt(document.getElementById("timeSlider").value, 10);
+        if (window.transientHistory && window.latestX) {
+          var T_selected = window.transientHistory[idx].T;
+          window.latestT = T_selected;
+          document.getElementById("timeLabel").innerText =
+            window.transientHistory[idx].time.toFixed(6) + " s";
+          drawGraph(T_selected, window.latestX, window.latestSegEdges);
+        }
+      }
+
+      function togglePlay() {
+        if (window.isPlaying) {
+          window.isPlaying = false;
+          clearInterval(window.playTimer);
+          document.getElementById("playBtn").innerText = "播放";
+        } else {
+          window.isPlaying = true;
+          document.getElementById("playBtn").innerText = "暂停";
+          startPlayback();
+        }
+      }
+
+      function startPlayback() {
+        if (!window.transientHistory) return;
+        var N = window.transientHistory.length;
+        var T_candidate1 = N / 60;
+        var T_candidate2 = 10;
+        var T_play = Math.max(T_candidate1, T_candidate2);
+        var intervalMs = (T_play / (N - 1)) * 1000;
+        var timeSlider = document.getElementById("timeSlider");
+        window.playTimer = setInterval(function () {
+          var current = parseInt(timeSlider.value, 10);
+          if (current < N - 1) {
+            timeSlider.value = current + 1;
+            onTimeSliderChange();
+          } else {
+            timeSlider.value = 0;
+            onTimeSliderChange();
+          }
+        }, intervalMs);
+      }
+
+      onCalcModeChange();
+    </script>
+  </body>
+</html>
